@@ -34,6 +34,20 @@ public class ProductoService {
     public Optional<Producto> getProducto(Integer idProducto) {
         return productoRepository.findById(idProducto);
     }
+    @Transactional(readOnly = true)
+    public List<Producto> consultaDerivada(double precioInf, double precioSup) {
+        return productoRepository.findByPrecioBetweenOrderByPrecioAsc(precioInf, precioSup);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> consultaJPQL(double precioInf, double precioSup) {
+        return productoRepository.consultaJPQL(precioInf, precioSup);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> consultaSQL(double precioInf, double precioSup) {
+        return productoRepository.consultaSQL(precioInf, precioSup);
+    }
 
     @Transactional
     public void save(Producto producto, MultipartFile imagenFile) {
