@@ -7,7 +7,6 @@ import TechShop.Virginia.service.ProductoService;
 import jakarta.validation.Valid;
 import java.util.Locale;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,14 +22,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/producto")
 public class ProductoController {
 
-    @Autowired
-    private ProductoService productoService;
+    private final ProductoService productoService;
+    private final CategoriaService categoriaService;
+    private final MessageSource messageSource;
 
-    @Autowired
-    private CategoriaService categoriaService;
-
-    @Autowired
-    private MessageSource messageSource;
+    public ProductoController(ProductoService productoService, CategoriaService categoriaService, MessageSource messageSource) {
+        this.productoService = productoService;
+        this.categoriaService = categoriaService;
+        this.messageSource = messageSource;
+    }
 
     @GetMapping("/listado")
     public String listado(Model model) {
@@ -44,8 +44,10 @@ public class ProductoController {
 
     @PostMapping("/guardar")
     public String guardar(@Valid Producto producto, @RequestParam MultipartFile imagenFile, RedirectAttributes redirectAttributes) {
+
         productoService.save(producto, imagenFile);
         redirectAttributes.addFlashAttribute("todoOk", messageSource.getMessage("mensaje.actualizado", null, Locale.getDefault()));
+
         return "redirect:/producto/listado";
     }
 
@@ -56,14 +58,14 @@ public class ProductoController {
         try {
             productoService.delete(idProducto);
         } catch (IllegalArgumentException e) {
-            titulo = "error";
-            detalle = "categoria.error01";
+            titulo = "error"; // Captura la excepción de argumento inválido para el mensaje de "no existe"
+            detalle = "producto.error01";
         } catch (IllegalStateException e) {
-            titulo = "error";
-            detalle = "categoria.error02";
+            titulo = "error"; // Captura la excepción de estado ilegal para el mensaje de "datos asociados"
+            detalle = "producto.error02";
         } catch (Exception e) {
-            titulo = "error";
-            detalle = "categoria.error03";
+            titulo = "error";  // Captura cualquier otra excepción inesperada
+            detalle = "producto.error03";
         }
         redirectAttributes.addFlashAttribute(titulo, messageSource.getMessage(detalle, null, Locale.getDefault()));
         return "redirect:/producto/listado";

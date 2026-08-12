@@ -22,7 +22,6 @@ public class ConsultaController {
         this.productoService = productoService;
     }
 
-    // Muestra el listado inicial, sin filtro
     @GetMapping("/listado")
     public String listado(Model model) {
         var lista = productoService.getProductos(false);
@@ -30,7 +29,6 @@ public class ConsultaController {
         return "/consultas/listado";
     }
 
-    // Consulta Derivada
     @PostMapping("/consultaDerivada")
     public String consultaDerivada(@RequestParam() double precioInf,
             @RequestParam() double precioSup, Model model) {
@@ -41,7 +39,6 @@ public class ConsultaController {
         return "/consultas/listado";
     }
 
-    // Consulta JPQL
     @PostMapping("/consultaJPQL")
     public String consultaJPQL(@RequestParam() double precioInf,
             @RequestParam() double precioSup, Model model) {
@@ -52,7 +49,6 @@ public class ConsultaController {
         return "/consultas/listado";
     }
 
-    //  Consulta SQL nativa
     @PostMapping("/consultaSQL")
     public String consultaSQL(@RequestParam() double precioInf,
             @RequestParam() double precioSup, Model model) {
@@ -62,4 +58,5 @@ public class ConsultaController {
         model.addAttribute("precioSup", precioSup);
         return "/consultas/listado";
     }
+
 }

@@ -4,7 +4,6 @@
  */
 package TechShop.Virginia.domain;
 
-
 public enum EstadoFactura {
     Activa("Activa"),
     Pagada("Pagada"),

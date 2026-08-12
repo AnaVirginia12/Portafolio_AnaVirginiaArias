@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class IndexController {
     
-    // Las últimas versiones de Spring, recomiendan utilizar final y constructor en lugar de @Autowired
+    // Las últimas versiones de Spring, recomiendan utilziar final y contructor en lugar de @autowired
     private final ProductoService productoService;
     private final CategoriaService categoriaService;
     
@@ -26,7 +26,7 @@ public class IndexController {
         model.addAttribute("productos", lista);
         var categorias = categoriaService.getCategorias(true);
         model.addAttribute("categorias", categorias);
-        return "index";
+        return "/index";
     }
     
     @GetMapping("/consultas/{idCategoria}")
@@ -34,7 +34,7 @@ public class IndexController {
         model.addAttribute("idCategoriaActual", idCategoria);
         var categoriaOptional = categoriaService.getCategoria(idCategoria);
         if (categoriaOptional.isEmpty()) {
-            // Puede ser que no exista la categoría buscada...
+            //Puede ser que no se exista la categoria buscada...
             model.addAttribute("productos", java.util.Collections.emptyList());
         } else {
             var categoria = categoriaOptional.get();
@@ -43,7 +43,6 @@ public class IndexController {
         }
         var categorias = categoriaService.getCategorias(true);
         model.addAttribute("categorias", categorias);
-        return "index";
+        return "/index";
     }
-    
 }

@@ -21,7 +21,8 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
     private final MessageSource messageSource;
 
-    public UsuarioController(UsuarioService usuarioService, MessageSource messageSource) {
+    public UsuarioController(UsuarioService usuarioService,
+            MessageSource messageSource) {
         this.usuarioService = usuarioService;
         this.messageSource = messageSource;
     }
@@ -40,34 +41,46 @@ public class UsuarioController {
             @RequestParam MultipartFile imagenFile,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
+            // Redirige al formulario de edición/creación para mostrar errores
             redirectAttributes.addFlashAttribute("error",
                     messageSource.getMessage("usuario.error04", null, Locale.getDefault()));
+            // Si no hay idUsuario, redirige al listado con modal para agregar
             if (usuario.getIdUsuario() == null) {
                 return "redirect:/usuario/listado";
             }
+            // Si hay idUsuario, redirige al formulario de modificación
             return "redirect:/usuario/modificar/" + usuario.getIdUsuario();
         }
-        usuarioService.save(usuario, imagenFile, true);
+        usuarioService.save(usuario, imagenFile,true);
         redirectAttributes.addFlashAttribute("todoOk",
-                messageSource.getMessage("mensaje.actualizado", null, Locale.getDefault()));
+                messageSource.getMessage("mensaje.actualizado",
+                        null, Locale.getDefault()));
         return "redirect:/usuario/listado";
     }
 
     @PostMapping("/eliminar")
-    public String eliminar(@RequestParam Integer idUsuario, RedirectAttributes redirectAttributes) {
+    public String eliminar(@RequestParam Integer idUsuario,
+            RedirectAttributes redirectAttributes) {
         try {
             usuarioService.delete(idUsuario);
             redirectAttributes.addFlashAttribute("todoOk",
-                    messageSource.getMessage("mensaje.eliminado", null, Locale.getDefault()));
+                    messageSource.getMessage("mensaje.eliminado", null,
+                            Locale.getDefault()));
         } catch (IllegalArgumentException e) {
+            // Captura argumento inválido para el mensaje de "no existe"
             redirectAttributes.addFlashAttribute("error",
-                    messageSource.getMessage("usuario.error01", null, Locale.getDefault()));
+                    messageSource.getMessage("usuario.error01", null,
+                            Locale.getDefault()));
         } catch (IllegalStateException e) {
+            // Captura estado ilegal para el mensaje de "datos asociados"
             redirectAttributes.addFlashAttribute("error",
-                    messageSource.getMessage("usuario.error02", null, Locale.getDefault()));
+                    messageSource.getMessage("usuario.error02", null,
+                            Locale.getDefault()));
         } catch (NoSuchMessageException e) {
+            // Captura cualquier otra excepción inesperada
             redirectAttributes.addFlashAttribute("error",
-                    messageSource.getMessage("usuario.error03", null, Locale.getDefault()));
+                    messageSource.getMessage("usuario.error03", null,
+                            Locale.getDefault()));
         }
         return "redirect:/usuario/listado";
     }
@@ -77,11 +90,12 @@ public class UsuarioController {
             Model model, RedirectAttributes redirectAttributes) {
         Optional<Usuario> usuarioOpt = usuarioService.getUsuario(idUsuario);
         if (usuarioOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "El usuario no fue encontrado.");
+            redirectAttributes.addFlashAttribute("error",
+                    "El usuario no fue encontrado.");
             return "redirect:/usuario/listado";
         }
         Usuario usuario = usuarioOpt.get();
-        usuario.setPassword(""); // Nunca se muestra la clave encriptada en el formulario
+        usuario.setPassword("");
         model.addAttribute("usuario", usuario);
         return "/usuario/modifica";
     }

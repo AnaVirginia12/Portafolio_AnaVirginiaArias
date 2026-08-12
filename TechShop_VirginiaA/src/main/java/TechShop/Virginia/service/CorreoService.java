@@ -15,7 +15,10 @@ public class CorreoService {
         this.mailSender = mailSender;
     }
 
-    public void enviarCorreoHtml(String para, String asunto, String contenido) throws MessagingException {
+    public void enviarCorreoHtml(String para,
+            String asunto,
+            String contenido) throws MessagingException {
+
         MimeMessage mensaje = mailSender.createMimeMessage();
         MimeMessageHelper correo = new MimeMessageHelper(mensaje, true);
 

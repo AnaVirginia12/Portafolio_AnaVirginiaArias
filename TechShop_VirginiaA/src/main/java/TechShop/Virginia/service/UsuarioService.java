@@ -50,57 +50,63 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Usuario> getUsuarioPorUsernameYPassword(String username, String password) {
+    public Optional<Usuario> getUsuarioPorUsernameYPassword(String username,
+            String password) {
         return usuarioRepository.findByUsernameAndPassword(username, password);
     }
 
     @Transactional(readOnly = true)
-    public Optional<Usuario> getUsuarioPorUsernameOCorreo(String username, String correo) {
+    public Optional<Usuario> getUsuarioPorUsernameOCorreo(String username,
+            String correo) {
         return usuarioRepository.findByUsernameOrCorreo(username, correo);
     }
 
     @Transactional(readOnly = true)
-    public boolean existeUsuarioPorUsernameOCorreo(String username, String correo) {
+    public boolean existeUsuarioPorUsernameOCorreo(String username,
+            String correo) {
         return usuarioRepository.existsByUsernameOrCorreo(username, correo);
     }
 
     @Transactional
     public void save(Usuario usuario, MultipartFile imagenFile, boolean encriptaClave) {
-        // Verificar si el correo ya existe, excluyendo el usuario actual
+        // Verificar si el correo ya existe, excluyendo el usuario actual        
         final Integer idUser = usuario.getIdUsuario();
         Optional<Usuario> usuarioDuplicado = usuarioRepository.findByUsernameOrCorreo(null, usuario.getCorreo());
         if (usuarioDuplicado.isPresent()) {
             Usuario encontrado = usuarioDuplicado.get();
+
             // Verifica si estamos en modo CREACIÓN (idUser == null) O si el ID encontrado NO es el mismo que estamos actualizando
             if (idUser == null || !encontrado.getIdUsuario().equals(idUser)) {
                 throw new DataIntegrityViolationException("El correo ya está en uso por otro usuario.");
             }
         }
 
-        // Se valida si la clave se va actualizar o si es un usuario nuevo se debe actualizar...
+        //Se valida si la clave se va actualizar o si es un usuario nuevo se debe actualizar...
         var asignarRol = false;
         if (usuario.getIdUsuario() == null) {
             if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
                 throw new IllegalArgumentException("La contraseña es obligatoria para nuevos usuarios.");
             }
-            // La primera vez como es activación no se encripta...
+            //La primera vez como es activación no se encripta...
             usuario.setPassword(encriptaClave ? passwordEncoder.encode(usuario.getPassword()) : usuario.getPassword());
             asignarRol = true;
         } else {
             if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
-                // El campo de password viene vacío en el formulario (no se desea cambiar)
-                // Recuperamos la contraseña ya encriptada existente en la base de datos.
+                // El campo de password en el formulario viene vacío (no se desea actualizar).
+                // Recuperamos la contraseña HASHED existente de la base de datos.
                 Usuario usuarioExistente = usuarioRepository.findById(usuario.getIdUsuario())
                         .orElseThrow(() -> new IllegalArgumentException("Usuario a modificar no encontrado."));
-                usuario.setPassword(usuarioExistente.getPassword());
+
+                // Asignamos la contraseña existente al objeto "usuario" antes de guardarlo.                
+                usuario.setPassword(encriptaClave ? passwordEncoder.encode(usuarioExistente.getPassword()) : usuarioExistente.getPassword());
             } else {
-                // El campo de password NO está vacío (se desea cambiar)
+                // El campo de password NO está vacío (se desea actualizar).
+                // Se encripta y se guarda la nueva contraseña.
                 usuario.setPassword(encriptaClave ? passwordEncoder.encode(usuario.getPassword()) : usuario.getPassword());
             }
         }
-
         usuario = usuarioRepository.save(usuario);
-        if (imagenFile != null && !imagenFile.isEmpty()) { // Si pasaron una imagen...
+        if (imagenFile != null && !imagenFile.isEmpty()) { //Si no está vacío... pasaron una imagen...            
             try {
                 String rutaImagen = firebaseStorageService.uploadImage(
                         imagenFile, "usuario", usuario.getIdUsuario());
@@ -110,30 +116,66 @@ public class UsuarioService {
             }
         }
         if (asignarRol) {
-            // Si se está creando el usuario, se le asigna el rol por defecto "USER"
+            //Si se está creando el usuario, se crea el rol por defecto "USER"
             asignarRolPorUsername(usuario.getUsername(), "USER");
         }
     }
 
     @Transactional
     public void delete(Integer idUsuario) {
+        // Verifica si la categoría existe antes de intentar eliminarlo
         if (!usuarioRepository.existsById(idUsuario)) {
-            throw new IllegalArgumentException("El usuario con ID " + idUsuario + " no existe.");
+            // Lanza una excepción para indicar que el usuario no fue encontrado
+            throw new IllegalArgumentException(
+                    "El usuario con ID " + idUsuario + " no existe.");
         }
         try {
             usuarioRepository.deleteById(idUsuario);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("No se puede eliminar el usuario. Tiene datos asociados.", e);
+            // Excepción para encapsular el problema de integridad de datos
+            throw new IllegalStateException(
+                    "No se puede eliminar el usuario. Tiene datos asociados.", e);
         }
     }
 
     @Transactional
     public Usuario asignarRolPorUsername(String username, String rolStr) {
-        Usuario usuario = usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
-        Rol rol = rolRepository.findByRol(rolStr)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado."));
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
+        if (usuarioOpt.isEmpty()) {
+            throw new RuntimeException("Usuario no encontrado: " + username);
+        }
+        Usuario usuario = usuarioOpt.get();
+        Optional<Rol> rolOpt = rolRepository.findByRol(rolStr);
+        if (rolOpt.isEmpty()) {
+            throw new RuntimeException("Rol no encontrado.");
+        }
+        Rol rol = rolOpt.get();
         usuario.getRoles().add(rol);
+        return usuarioRepository.save(usuario);
+    }
+
+    //Sección para gestionar roles a usuarios...
+    
+    @Transactional(readOnly = true)
+    public List<String> getRolesNombres() {
+        // Retorna una lista de Strings con el nombre de cada rol
+        return rolRepository.findAll().stream()
+                .map(Rol::getRol)
+                .toList();
+    }
+
+    @Transactional
+    public Usuario eliminarRol(String username, Integer idRol) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
+        if (usuarioOpt.isEmpty()) {
+            throw new RuntimeException("Usuario no encontrado: " + username);
+        }
+        Usuario usuario = usuarioOpt.get();
+
+        // Filtra la colección de roles del usuario para mantener solo los que NO coinciden con idRol
+        usuario.getRoles().removeIf(rol -> rol.getIdRol().equals(idRol));
+
+        // Guarda el usuario con la colección de roles modificada
         return usuarioRepository.save(usuario);
     }
 }
