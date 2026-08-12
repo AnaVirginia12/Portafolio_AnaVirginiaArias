@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
-     <head th:replace="~{general/fragmentos :: head}"/>
+    <head th:replace="~{general/fragmentos :: head}"/>
     <body>
         <!-- fragmento 1 para Agregar producto en ventana modal -->
         <section th:fragment="tabs" class="py-3 mb-4">
@@ -51,7 +51,7 @@
                             </div>
                             <form th:action="@{/carrito/agregar}" th:method="POST" class="d-inline">
                                 <input type="hidden" th:value="${p.idProducto}" name="idProducto"/>
-                                <button type="submit"
+                                <button type="button"
                                         class="btn btn-sm btn-primary"
                                         th:disabled="${p.existencias == 0}"
                                         onclick="addCart(this.form)">

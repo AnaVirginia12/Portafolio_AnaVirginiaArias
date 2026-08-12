@@ -1,84 +1,36 @@
-/*
-    TechShop - estilos.css
-    Complementa Bootstrap sin sobreescribir sus elementos base.
-    Las páginas con Thymeleaf usan Bootstrap directamente.
-    Las páginas legacy (ejemplo2, multimedia, iframes) usan clases .ts-*
-*/
-
-/* =============================================
-   PÁGINAS CON THYMELEAF + BOOTSTRAP
-   ============================================= */
-
-/* body: fondo suave, igual que Tienda */
-body {
-    background-color: #f0f2f5;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.card {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    z-index: 1;
+}
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* navbar: se respeta el color original de Bootstrap,
-   solo se ajusta la sombra */
-.navbar {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+@media print {
+    /* 1. La regla principal: fija la cabecera en cada página */
+    thead {
+        display: table-header-group;
+    }
+
+    /* 2. Regla de compatibilidad (opcional pero recomendada) */
+    tr {
+        page-break-inside: avoid;
+    }
+    
+    /* 3. Asegura que la tabla no tenga márgenes extraños que rompan el thead */
+    table {
+        margin: 0 !important;
+    }
+    
+    /* [Opcional] Si está usando Bootstrap/cards para la tabla, elimine los bordes*/
+    .card, .card-body {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Oculta elementos de navegación, como se explicó antes */
+    .d-print-none, .navbar, .footer {
+        display: none !important;
+    }
 }
-
-/* footer y section NO tienen position:fixed ni colores forzados.
-   Bootstrap maneja eso con bg-info, bg-success, etc. */
-
-/* =============================================
-   PÁGINAS LEGACY (ejemplo2, multimedia, iframes)
-   Se usan clases .ts-* para no interferir con Bootstrap
-   ============================================= */
-
-.ts-header {
-    background-color: #6366FF;
-    padding: 10px 20px;
-}
-
-.ts-logo {
-    font-size: 1.6rem;
-    font-weight: bold;
-    font-family: cursive;
-    color: white;
-    text-decoration: none;
-}
-
-.ts-nav-menu {
-    list-style: none;
-    display: flex;
-    margin: 0;
-    padding: 0;
-    align-items: center;
-    gap: 10px;
-}
-
-.ts-nav-link {
-    text-decoration: none;
-    color: white;
-    font-size: 1.1rem;
-}
-
-.ts-menu-item {
-    padding: 6px 12px;
-    background-color: green;
-    border-radius: 8px;
-    transition: background-color 0.2s;
-}
-
-.ts-menu-item:hover {
-    background-color: black;
-}
-
-.ts-aside {
-    background-color: #99FF99;
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 1rem;
-}
-
-.ts-section {
-    background-color: white;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-}
-
